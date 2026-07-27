@@ -1,0 +1,399 @@
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MapPin, ChevronDown, Phone, Menu, X } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { brand } from '@/lib/brand'
+import { cn } from '@/lib/utils'
+
+const NAVY = '#0F2A4A'
+const RED = '#E63946'
+const LIGHT = '#F3F4F6'
+
+const Navigation = () => {
+  const pathname = usePathname()
+  const [scrolled, setScrolled] = useState(false)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const navRef = React.useRef<HTMLDivElement>(null)
+  
+  // Paths that should have transparent header at the top (dark hero)
+  const darkHeroPaths = ['/', '/about', '/leadership', '/partnerships']
+  const isDarkHeroPage = darkHeroPaths.includes(pathname)
+  const isTransparent = isDarkHeroPage && !scrolled
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null)
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenDropdown(null)
+        setMobileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [])
+
+  type NavLeafItem = {
+    name: string
+    href: string
+    children?: never
+    variant?: 'default' | 'contact'
+  }
+  type NavGroupItem = {
+    name: string
+    children: Array<{ name: string; href: string }>
+    href?: string
+    variant?: never
+  }
+
+  const navItems: Array<NavLeafItem | NavGroupItem> = [
+    { name: 'Home', href: '/' },
+    { name: 'About', href: '/about' },
+    {
+      name: 'Departments',
+      href: '/departments',
+      children: [
+        { name: 'Health & Hospital Solutions', href: '/departments#health-hospitals' },
+        { name: 'IT & IT Consulting', href: '/departments#it-consulting' },
+        { name: 'Electromechanical Works', href: '/departments#electromechanical' },
+        { name: 'Medical Imaging Solutions', href: '/departments#medical-imaging' },
+      ],
+    },
+    { name: 'Partners', href: '/partnerships' },
+    { name: 'Leadership', href: '/leadership' },
+    {
+      name: 'More',
+      children: [
+        { name: 'News & Articles', href: '/articles' },
+        { name: 'Events', href: '/events' },
+        { name: 'Gallery', href: '/gallery' },
+        { name: 'Careers', href: '/careers' },
+      ],
+    },
+    { name: 'Location', href: '#contact' },
+  ]
+
+  const contactUsItem: NavLeafItem = { 
+    name: 'Contact Us', 
+    href: '#contact', 
+    variant: 'contact' 
+  }
+
+  const isNavActive = (href: string) => {
+    if (href.startsWith('#')) return false
+    if (href === '/') return pathname === '/' || pathname === '/index.html'
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
+  const isGroupActive = (item: NavGroupItem) => {
+    if (item.href && isNavActive(item.href)) return true
+    return item.children.some((child) => {
+      const childPath = child.href.split('#')[0]
+      return childPath ? isNavActive(childPath) : false
+    })
+  }
+
+  const handleNavigation = (href: string) => {
+    if (href.startsWith('#')) {
+      if (window.location.pathname !== '/') {
+        window.location.href = '/' + href
+      } else {
+        const element = document.querySelector(href)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+      setOpenDropdown(null)
+      setMobileMenuOpen(false)
+    } else {
+      window.location.href = href
+      setOpenDropdown(null)
+      setMobileMenuOpen(false)
+    }
+  }
+
+  const headerPadding =
+    'px-6 sm:px-10 md:px-14 lg:px-[64px] xl:px-[80px] 2xl:px-[96px]'
+
+  const navLinkBase =
+    'relative whitespace-nowrap text-[14px] md:text-[15px] lg:text-[16px] font-medium tracking-[0.03em] transition-colors duration-200 py-1'
+
+  const getNavLinkClass = (active: boolean, isHome?: boolean, isTransparent?: boolean) =>
+    cn(
+      navLinkBase,
+      'after:absolute after:left-0 after:-bottom-2 after:h-[2px] after:transition-all after:duration-300',
+      active
+        ? (isTransparent
+            ? 'text-white after:w-full after:bg-white'
+            : 'text-[#0F2A4A] after:w-full after:bg-[#0F2A4A]')
+        : (isTransparent
+            ? 'text-white after:w-0 after:bg-white hover:after:w-full'
+            : 'text-[#0F2A4A] after:w-0 after:bg-[#0F2A4A] hover:after:w-full')
+    )
+
+  const renderNavItem = (item: NavLeafItem | NavGroupItem, isTransparent?: boolean) => {
+    if ('variant' in item && item.variant === 'contact') {
+      return (
+        <button
+          key={item.name}
+          type="button"
+          onClick={() => handleNavigation(item.href)}
+          className="shrink-0 inline-flex items-center justify-center h-10 md:h-11 px-5 md:px-6 text-[14px] md:text-[15px] font-semibold text-white bg-[#E63946] hover:bg-[#0F2A4A] transition-all duration-300 shadow-sm rounded-sm"
+        >
+          {item.name}
+        </button>
+      )
+    }
+
+    if ('children' in item) {
+      const isActive = openDropdown === item.name
+      const isCurrent = isGroupActive(item as NavGroupItem)
+      const hasLandingHref = Boolean(item.href)
+      return (
+        <div
+          key={item.name}
+          className="relative shrink-0"
+          onMouseEnter={() => setOpenDropdown(item.name)}
+          onMouseLeave={() => setOpenDropdown(null)}
+        >
+          <div className="inline-flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (hasLandingHref && item.href) {
+                  handleNavigation(item.href)
+                  return
+                }
+                setOpenDropdown(isActive ? null : item.name)
+              }}
+              className={cn('inline-flex items-center', getNavLinkClass(isCurrent, undefined, isTransparent))}
+            >
+              <span>{item.name}</span>
+            </button>
+
+            <button
+              type="button"
+              aria-label={`Toggle ${item.name} menu`}
+              onClick={() => setOpenDropdown(isActive ? null : item.name)}
+              className={cn(
+                'p-1 rounded-[6px] transition-colors hover:bg-[#F3F4F6]',
+                isTransparent ? 'text-white hover:text-[#E63946]' : 'text-[#0F2A4A] hover:text-[#E63946]'
+              )}
+            >
+              <ChevronDown
+                className={cn(
+                  'w-4 h-4 transition-transform duration-200',
+                  isActive ? 'rotate-180 text-[#E63946]' : 'rotate-0'
+                )}
+                strokeWidth={1.75}
+              />
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {isActive && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-72 rounded-sm bg-white shadow-[0_20px_48px_rgba(34,34,34,0.08)] border border-[#E5E7EB] overflow-hidden z-50"
+              >
+                <div className="py-2">
+                  {item.children?.map((child) => (
+                    <button
+                      key={child.name}
+                      type="button"
+                      onClick={() => handleNavigation(child.href)}
+                      className="w-full text-left px-5 py-3 text-[14px] text-[#2B2B2B] hover:bg-[#F3F4F6] hover:text-[#E63946] transition-colors"
+                    >
+                      {child.name}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )
+    }
+
+    return (
+      <button
+        key={item.name}
+        type="button"
+        onClick={() => handleNavigation(item.href)}
+        className={cn('shrink-0', getNavLinkClass(isNavActive(item.href), item.name === 'Home', isTransparent))}
+      >
+        {item.name}
+      </button>
+    )
+  }
+
+  return (
+    <header
+      className={cn(
+        'fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ease-in-out',
+        scrolled && 'shadow-[0_4px_32px_rgba(0,0,0,0.07)]'
+      )}
+    >
+      {/* Main navigation bar */}
+      <nav
+        className={cn(
+          'w-full transition-all duration-300 ease-in-out border-b',
+          isTransparent
+            ? 'bg-transparent border-transparent'
+            : 'bg-white border-[#E8E2DA]',
+          headerPadding
+        )}
+      >
+        <div className="flex items-center justify-between h-[72px] md:h-[80px] lg:h-[88px] gap-3 lg:gap-8 lg:grid lg:grid-cols-[auto_1fr_auto] max-w-[1600px] mx-auto">
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex shrink-0 items-center cursor-pointer group -ml-2"
+            onClick={() => handleNavigation('/')}
+          >
+            <img
+              src={brand.logoPath}
+              alt={`${brand.name} Logo`}
+              className="w-[130px] h-[52px] sm:w-[145px] sm:h-[58px] md:w-[160px] md:h-[64px] lg:w-[180px] lg:h-[72px] object-contain mix-blend-multiply"
+            />
+          </motion.div>
+
+          {/* Centered navigation links (desktop only) */}
+          <div ref={navRef} className="hidden lg:flex items-center justify-center min-w-0">
+            <div className="flex items-center gap-x-6 md:gap-x-8 lg:gap-x-10 xl:gap-x-13 px-2">
+              {navItems.map((item) => renderNavItem(item, isTransparent))}
+            </div>
+          </div>
+
+          {/* Contact Us button (desktop only) */}
+          <div className="hidden lg:flex items-center justify-end">
+            {renderNavItem(contactUsItem, isTransparent)}
+          </div>
+
+          {/* Hamburger button (mobile/tablet only) */}
+          <div className="flex lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-[#0F2A4A]"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, y: -10 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="lg:hidden bg-white border-b border-[#E8E2DA] overflow-hidden"
+            >
+              <div className="px-6 sm:px-10 md:px-14 py-6 space-y-4">
+                {navItems.map((item) => {
+                  if ('children' in item) {
+                    const isActive = openDropdown === item.name
+                    const isCurrent = isGroupActive(item as any)
+                    return (
+                      <div key={item.name} className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => setOpenDropdown(isActive ? null : item.name)}
+                          className={cn(
+                            'w-full flex items-center justify-between text-left',
+                            getNavLinkClass(isCurrent)
+                          )}
+                        >
+                          <span>{item.name}</span>
+                          <ChevronDown
+                            className={cn(
+                              'w-5 h-5 transition-transform duration-200',
+                              isActive ? 'rotate-180' : ''
+                            )}
+                            strokeWidth={1.75}
+                          />
+                        </button>
+                        <AnimatePresence>
+                          {isActive && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="pl-4 space-y-2"
+                            >
+                              {item.children?.map((child) => (
+                                <button
+                                  key={child.name}
+                                  type="button"
+                                  onClick={() => handleNavigation(child.href)}
+                                  className="w-full text-left py-2 text-[14px] text-[#2B2B2B] hover:text-[#0F2A4A] transition-colors"
+                                >
+                                  {child.name}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <button
+                      key={item.name}
+                      type="button"
+                      onClick={() => handleNavigation(item.href)}
+                      className={cn('w-full text-left', getNavLinkClass(isNavActive(item.href), item.name === 'Home'))}
+                    >
+                      {item.name}
+                    </button>
+                  )
+                })}
+                {/* Contact Us button in mobile menu */}
+                <button
+                  key={contactUsItem.name}
+                  type="button"
+                  onClick={() => handleNavigation(contactUsItem.href)}
+                  className="w-full inline-flex items-center justify-center h-10 md:h-11 px-6 md:px-7 text-[14px] md:text-[15px] font-semibold text-white rounded-sm bg-[#0F2A4A] hover:bg-[#0F2A4A] transition-colors duration-200 shadow-sm"
+                >
+                  {contactUsItem.name}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+    </header>
+  )
+}
+
+export default Navigation
