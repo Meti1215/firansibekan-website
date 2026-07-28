@@ -386,7 +386,7 @@ const Chatbot = () => {
                           : 'bg-[#0F2A4A] text-white'
                       }`}
                     >
-                      <p className="text-sm leading-relaxed">{message.text}</p>
+                      <p className={`text-sm leading-relaxed ${message.isBot ? 'text-[#2B2B2B]' : 'text-white'}`}>{message.text}</p>
                     </div>
                     
                     {message.isBot && message.quickReplies && (
@@ -440,13 +440,13 @@ const Chatbot = () => {
             <div className="p-3 sm:p-4 border-t border-[#E5E7EB] bg-white">
               <div className="flex space-x-2">
                 <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type your question..."
-                  className="flex-1 px-3 py-2 sm:px-4 sm:py-2.5 text-sm border border-[#E5E7EB] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#0F2A4A]/30 focus:border-[#0F2A4A]"
-                />
+  type="text"
+  value={inputValue}
+  onChange={(e) => setInputValue(e.target.value)}
+  onKeyPress={handleKeyPress}
+  placeholder="Type your question..."
+  className="flex-1 px-3 py-2 sm:px-4 sm:py-2.5 text-sm text-[#2B2B2B] placeholder:text-gray-400 bg-white border border-[#E5E7EB] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#0F2A4A]/30 focus:border-[#0F2A4A]"
+/>
                 <Button
                   onClick={() => handleSendMessage()}
                   disabled={!inputValue.trim()}

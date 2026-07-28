@@ -305,21 +305,21 @@ const About = () => {
       }}
       className="relative overflow-hidden rounded-sm shadow-xl group"
     >
-      <img
-        src={venture.image}
-        alt={venture.alt}
-        className="
-          w-full 
-          h-40 
-          sm:h-52 
-          md:h-60 
-          lg:h-64 
-          object-cover 
-          group-hover:scale-105 
-          transition-transform 
-          duration-500
-        "
-      />
+     <img
+  src={venture.image}
+  alt={venture.alt}
+  className="
+    w-full
+    h-40
+    sm:h-52
+    md:h-60
+    lg:h-64
+    object-cover
+    group-hover:scale-105
+    transition-transform
+    duration-500
+  "
+/>
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
